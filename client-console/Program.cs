@@ -174,7 +174,7 @@ namespace client_console
         private static int NegaScoutHelper(Board cell, char color, int depth, int alpha, int beta,
             string[] victoryCells)
         {
-            if (depth == 0)
+            if (depth == 0 || !cell.IsPlayable(color))
                 return Heuristic(cell, color, victoryCells);
             var bestScore = int.MinValue;
             var adaptiveBeta = beta;
@@ -264,7 +264,7 @@ namespace client_console
                 openings.Clear();
             }
 
-            return NegaScout(cell, color, 8, victoryCell);
+            return NegaScout(cell, color, 10, victoryCell);
         }
 
         private static string CallBot(string gameInfo)

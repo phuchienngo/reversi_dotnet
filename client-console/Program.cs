@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.XPath;
 
 // ReSharper disable IdentifierTypo
 // ReSharper disable UnusedMember.Local
@@ -15,7 +16,7 @@ namespace client_console
 {
     internal static class Program
     {
-        private const string ip = "209.97.169.233"; /*"localhost"*/
+        private const string ip = "209.97.169.233" /*"localhost"*/;
         private const int port = 14003;
         private static readonly Random rd = new();
         private static List<string> history;
@@ -27,6 +28,12 @@ namespace client_console
             var result = new List<(char, char)>();
             foreach (var r in "12345678")
                 result.AddRange("abcdefgh".Where(c => cell.IsPlaceable((c, r), color)).Select(c => (c, r)));
+            result.Sort((item1, item2) =>
+            {
+                var a = cell.GetWeightValue(item1);
+                var b = cell.GetWeightValue(item2);
+                return a < b ? 1 : a == b ? 0 : -1;
+            });
             return result;
         }
 
@@ -228,13 +235,13 @@ namespace client_console
                     if (adaptiveBeta == beta || depth < 3)
                     {
                         bestScore = currentScore;
-                        bestMove = "" + move.Item1 + move.Item2;
+                        bestMove = string.Join("",new[]{move.Item1,move.Item2});
                     }
                     else
                     {
                         bestScore = -NegaScoutHelper(cell, color == 'B' ? 'W' : 'B', depth - 1, -beta, -currentScore,
                             victoryCells);
-                        bestMove = "" + move.Item1 + move.Item2;
+                        bestMove = string.Join("",new[]{move.Item1,move.Item2});
                     }
 
                     if (bestScore >= beta)
@@ -264,7 +271,7 @@ namespace client_console
                 openings.Clear();
             }
 
-            return NegaScout(cell, color, 10, victoryCell);
+            return NegaScout(cell, color, 8, victoryCell);
         }
 
         private static string CallBot(string gameInfo)
@@ -283,7 +290,6 @@ namespace client_console
 
             return "NULL";
         }
-
         private static void Main()
         {
             var tcpClient = new TcpClient();
@@ -312,9 +318,10 @@ namespace client_console
                 Console.WriteLine(response);
                 if (!Regex.IsMatch(response, "^victory_cell"))
                     break;
-                var result = CallBot(response);
-                data = Encoding.ASCII.GetBytes(result);
-                stream.Write(data, 0, data.Length);
+                Console.WriteLine("Your turn ->\n");
+                var datas = Encoding.ASCII.GetBytes(CallBot(response));
+                stream.Write(datas, 0, datas.Length);
+                Console.WriteLine("Your opponent turn ->\n");
             }
 
             tcpClient.Close();

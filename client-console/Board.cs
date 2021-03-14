@@ -30,6 +30,10 @@ namespace client_console
             board[3, 4] = board[4, 3] = 'B';
         }
 
+        public int GetWeightValue((char, char) position)
+        {
+            return weights[8 * GetRowID(position.Item2) + GetColumnID(position.Item1)];
+        }
         public int GetRowID(char numericCharacter)
         {
             return numericCharacter - '1';
@@ -147,7 +151,7 @@ namespace client_console
             {
                 var cells = cellLines[r].Split(' ');
                 for (var c = 0; c < 8; c++)
-                    board[r, c] = cells[c][0];
+                    board[r, c] = cells[c].Trim()[0];
             }
         }
 

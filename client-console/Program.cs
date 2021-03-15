@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.XPath;
 
 // ReSharper disable IdentifierTypo
 // ReSharper disable UnusedMember.Local
@@ -16,26 +15,12 @@ namespace client_console
 {
     internal static class Program
     {
-        private const string ip = "209.97.169.233" /*"localhost"*/;
+        private const string ip = /*"209.97.169.233"*/ "209.97.169.233";
         private const int port = 14003;
         private static readonly Random rd = new();
         private static List<string> history;
         private static readonly List<string> openings = new();
         private static bool usingOpeningList = true;
-
-        private static List<(char, char)> GetAvailableMoves(Board cell, char color)
-        {
-            var result = new List<(char, char)>();
-            foreach (var r in "12345678")
-                result.AddRange("abcdefgh".Where(c => cell.IsPlaceable((c, r), color)).Select(c => (c, r)));
-            result.Sort((item1, item2) =>
-            {
-                var a = cell.GetWeightValue(item1);
-                var b = cell.GetWeightValue(item2);
-                return a < b ? 1 : a == b ? 0 : -1;
-            });
-            return result;
-        }
 
         private static void GetOpponentMove(Board cell)
         {
@@ -86,8 +71,8 @@ namespace client_console
 
         private static IEnumerable<((int, int), char)> DoMoves(Board cell, (char, char) position, char color)
         {
-            var oldState = new List<((int, int), char)>();
             var changedCells = cell.GetFlips(position, color);
+            var oldState = new List<((int, int), char)>(changedCells.Count + 1);
             foreach (var pos in changedCells)
             {
                 oldState.Add((pos, cell.GetValue(pos)));
@@ -110,17 +95,16 @@ namespace client_console
         private static int Heuristic(Board cell, char color, string[] victoryCells)
         {
             var total = 0;
-
             var oppColor = color == 'B' ? 'W' : 'B';
             for (var i = 0; i < 64; i++)
                 if (cell.board[i / 8, i % 8] == color)
                     total += Board.weights[i];
                 else if (cell.board[i / 8, i % 8] == oppColor)
                     total -= Board.weights[i];
-
             foreach (var item in victoryCells)
-                if (cell.GetValue((item[0], item[1])) == color)
+                if (cell.GetValue((item[0], item[1])) == color) {
                     total += 10;
+                }
             return total * 2 + 3 * (cell.CountColor(color) - cell.CountColor(oppColor));
         }
 
@@ -128,10 +112,10 @@ namespace client_console
         {
             if (depth == 0)
                 return Heuristic(cell, color, victoryCells);
-            var moves = GetAvailableMoves(cell, color);
+            var moves = cell.GetAllPossibleMoves(color);
             if (moves.Count == 0)
             {
-                if (GetAvailableMoves(cell, color == 'W' ? 'B' : 'W').Count == 0)
+                if (cell.GetAllPossibleMoves(color == 'W' ? 'B' : 'W').Count == 0)
                     return Heuristic(cell, color, victoryCells);
                 var val = -NegamaxHelper(cell, color == 'W' ? 'B' : 'W', depth - 1, -beta, -alpha, victoryCells);
                 if (val >= beta)
@@ -161,7 +145,7 @@ namespace client_console
             var alpha = -65;
             var beta = 65;
             var move = string.Empty;
-            foreach (var nextMove in GetAvailableMoves(cell, color))
+            foreach (var nextMove in cell.GetAllPossibleMoves(color))
             {
                 var oldState = DoMoves(cell, nextMove, color);
                 var val = -NegamaxHelper(cell, color == 'W' ? 'B' : 'W', depth - 1, -beta, -alpha, victoryCells);
@@ -307,6 +291,7 @@ namespace client_console
             }
             catch
             {
+                Console.WriteLine("Opening list not found");
                 usingOpeningList = false;
             }
 

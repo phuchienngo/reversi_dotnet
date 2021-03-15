@@ -59,7 +59,7 @@ namespace client_console
             return board[GetRowID(position.Item2), GetColumnID(position.Item1)];
         }
 
-        private bool IsOutOfRange(int r, int c)
+        private static bool IsOutOfRange(int r, int c)
         {
             return r < 0 || r > 7 || c < 0 || c > 7;
         }
@@ -107,6 +107,12 @@ namespace client_console
             var result = new List<(char, char)>();
             foreach (var r in "12345678")
                 result.AddRange(from c in "abcdefgh" where IsPlaceable((c, r), color) select (c, r));
+            result.Sort((item1, item2) =>
+            {
+                var a = this.GetWeightValue(item1);
+                var b = this.GetWeightValue(item2);
+                return a < b ? 1 : a == b ? 0 : -1;
+            });
             return result;
         }
 

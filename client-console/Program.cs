@@ -255,7 +255,7 @@ namespace client_console
                 openings.Clear();
             }
 
-            return NegaScout(cell, color, 8, victoryCell);
+            return NegaScout(cell, color, 10, victoryCell);
         }
 
         private static string CallBot(string gameInfo)
@@ -304,8 +304,7 @@ namespace client_console
                 if (!Regex.IsMatch(response, "^victory_cell"))
                     break;
                 Console.WriteLine("Your turn ->\n");
-                var datas = Encoding.ASCII.GetBytes(CallBot(response));
-                stream.Write(datas, 0, datas.Length);
+                stream.Write(Encoding.ASCII.GetBytes(CallBot(response)));
                 Console.WriteLine("Your opponent turn ->\n");
             }
 

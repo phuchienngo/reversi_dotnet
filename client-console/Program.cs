@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -18,19 +17,21 @@ namespace client_console
         private const string ip = /*"209.97.169.233"*/ "209.97.169.233";
         private const int port = 14003;
         private static readonly Random rd = new();
-        private static List<string> history;
-        private static readonly List<string> openings = new();
+        private static HashSet<string> history;
+        private static readonly HashSet<string> openings = new();
         private static bool usingOpeningList = true;
-
         private static void GetOpponentMove(Board cell)
         {
-            var exceptList = new List<string> {"d4", "e4", "d5", "e5"};
-            foreach (var str in "12345678".SelectMany(r =>
-                from c in "abcdefgh"
-                let str = "" + c + r
-                where cell.GetValue((c, r)) != 'E' && !exceptList.Contains(str) && !history.Contains(str)
-                select str))
-                history.Add(str);
+            var exceptList = new HashSet<string> {"d4", "e4", "d5", "e5"};
+            foreach (var r in "12345678")
+            {
+                foreach(var c in "abcdefgh")
+                {
+                    var str = string.Concat(c, r);
+                    if(cell.GetValue((c, r)) != 'E' && !exceptList.Contains(str) && !history.Contains(str))
+                        history.Add(str);
+                }
+            }
         }
 
         private static List<string> GetMoveFromOpening()
@@ -91,7 +92,6 @@ namespace client_console
             foreach (var (valueTuple, item2) in oldState)
                 cell.SetValue(valueTuple, item2);
         }
-
         private static int Heuristic(Board cell, char color, string[] victoryCells)
         {
             var total = 0;
@@ -201,9 +201,9 @@ namespace client_console
 
         private static string NegaScout(Board cell, char color, int depth, string[] victoryCells)
         {
-            var alpha = int.MinValue;
-            var beta = int.MaxValue;
-            var bestScore = int.MinValue;
+            var alpha = -1000000;
+            var beta = 1000000;
+            var bestScore = -1000000;
             var bestMove = "NULL";
             var adaptiveBeta = beta;
             var nextMoves = cell.GetAllPossibleMoves(color);
@@ -219,13 +219,13 @@ namespace client_console
                     if (adaptiveBeta == beta || depth < 3)
                     {
                         bestScore = currentScore;
-                        bestMove = string.Join("",new[]{move.Item1,move.Item2});
+                        bestMove = string.Concat(move.Item1, move.Item2);
                     }
                     else
                     {
                         bestScore = -NegaScoutHelper(cell, color == 'B' ? 'W' : 'B', depth - 1, -beta, -currentScore,
                             victoryCells);
-                        bestMove = string.Join("",new[]{move.Item1,move.Item2});
+                        bestMove = string.Concat(move.Item1, move.Item2);
                     }
 
                     if (bestScore >= beta)
@@ -266,7 +266,7 @@ namespace client_console
             cell.Update(new List<string>(lines).GetRange(3, 8).ToArray());
             var you = lines[12];
             var result = Bot(victoryCell, cell, you);
-            if (result != "NULL")
+            if (!result.Equals("NULL"))
             {
                 history.Add(result);
                 return result;
@@ -281,7 +281,7 @@ namespace client_console
                 throw new InvalidProgramException("Cannot connect to server");
             Console.WriteLine("Connected to server");
             var stream = tcpClient.GetStream();
-            history = new List<string>();
+            history = new HashSet<string>();
             try
             {
                 var streamReader = new StreamReader("opening.txt");
@@ -294,7 +294,6 @@ namespace client_console
                 Console.WriteLine("Opening list not found");
                 usingOpeningList = false;
             }
-
             while (true)
             {
                 var data = new byte[256];
@@ -303,9 +302,7 @@ namespace client_console
                 Console.WriteLine(response);
                 if (!Regex.IsMatch(response, "^victory_cell"))
                     break;
-                Console.WriteLine("Your turn ->\n");
                 stream.Write(Encoding.ASCII.GetBytes(CallBot(response)));
-                Console.WriteLine("Your opponent turn ->\n");
             }
 
             tcpClient.Close();

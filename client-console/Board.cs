@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Linq;
+
 // ReSharper disable StringLiteralTypo
 // ReSharper disable IdentifierTypo
 // ReSharper disable InconsistentNaming
@@ -85,7 +85,7 @@ namespace client_console
             return false;
         }
 
-        public bool IsPlaceable((char, char) position, char color)
+        private bool IsPlaceable((char, char) position, char color)
         {
             return IsDirectionPlaceable(position, (1, 0), color) ||
                    IsDirectionPlaceable(position, (1, 1), color) ||
@@ -99,14 +99,30 @@ namespace client_console
 
         public bool IsPlayable(char color)
         {
-            return "12345678".Any(r => "abcdefgh".Any(c => IsPlaceable((c, r), color)));
+            foreach (var r in "12345678")
+            {
+                foreach (var c in "abcdefgh")
+                {
+                    if (IsPlaceable((c, r), color)) 
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         public List<(char, char)> GetAllPossibleMoves(char color)
         {
+            
             var result = new List<(char, char)>();
             foreach (var r in "12345678")
-                result.AddRange(from c in "abcdefgh" where IsPlaceable((c, r), color) select (c, r));
+            {
+                foreach (var c in "abcdefgh")
+                {
+                    if(this.IsPlaceable((c,r),color))
+                        result.Add((c,r));
+                }
+            }
             result.Sort((item1, item2) =>
             {
                 var a = this.GetWeightValue(item1);

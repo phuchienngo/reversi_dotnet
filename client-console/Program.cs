@@ -18,6 +18,7 @@ namespace client_console
         private const int port = 14003;
         private const int MaxDepth = 10;
         private static readonly Board cell = new();
+        private static readonly Random rd = new(Guid.NewGuid().GetHashCode());
 
         private static IEnumerable<((int, int), char)> DoMoves((char, char) position, char color)
         {
@@ -200,7 +201,11 @@ namespace client_console
 
         private static string Bot(ICollection<(int, int)> victoryCell, string you)
         {
-            return NegaScout(you == "BLACK" ? 'B' : 'W', 0, victoryCell);
+            return rd.Next(10) switch
+            {
+                < 7 => Negamax(you == "BLACK" ? 'B' : 'W', 7, victoryCell),
+                _ => NegaScout(you == "BLACK" ? 'B' : 'W', 0, victoryCell)
+            };
         }
 
         private static string CallBot(string gameInfo)
@@ -209,7 +214,7 @@ namespace client_console
             cell.Update(lines.Skip(3).Take(8).ToList());
             var you = lines[12];
             var victoryCells = lines[1].Split(' ')
-                .Where(item => cell.GetValue((item[0],item[1])) == 'E')
+                .Where(item => cell.GetValue((item[0], item[1])) == 'E')
                 .Select(item => (Board.GetRowID(item[1]), Board.GetColumnID(item[0])))
                 .ToList();
             return Bot(victoryCells, you);

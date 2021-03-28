@@ -109,11 +109,11 @@ namespace client_console
                 var val = -NegamaxHelper(color == 'W' ? 'B' : 'W', depth - 1, -beta, -alpha, victoryCells);
                 UndoMoves(oldState);
                 if (val >= beta)
-                    return "" + nextMove.Item1 + nextMove.Item2;
+                    return string.Concat(nextMove.Item1, nextMove.Item2);
                 if (val > alpha)
                 {
                     alpha = val;
-                    move = "" + nextMove.Item1 + nextMove.Item2;
+                    move = string.Concat(nextMove.Item1, nextMove.Item2);
                 }
             }
 

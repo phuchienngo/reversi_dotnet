@@ -1,2 +1,2 @@
 # reversi_dotnet
-NegaScout algorithm
+NegaScout and NegaMax algorithm

@@ -17,8 +17,8 @@ namespace client_console
         private const string ip = "209.97.169.233";
         private const int port = 14003;
         private const int MaxDepth = 10;
-        private static readonly Board cell = new Board();
-        private static readonly Random rd = new Random(Guid.NewGuid().GetHashCode());
+        private static readonly Board cell = new();
+        private static readonly Random rd = new(Guid.NewGuid().GetHashCode());
 
         private static IEnumerable<((int, int), char)> DoMoves((char, char) position, char color)
         {
